@@ -47,7 +47,20 @@ public enum ErrorCode {
     SESSION_ALREADY_PAUSED(HttpStatus.UNPROCESSABLE_ENTITY, "이미 하차 상태입니다."),
     SESSION_ALREADY_RUNNING(HttpStatus.UNPROCESSABLE_ENTITY, "이미 진행 중입니다."),
     SESSION_ALREADY_ENDED(HttpStatus.UNPROCESSABLE_ENTITY, "이미 종료된 세션입니다."),
-    SESSION_TARGET_NOT_REACHED(HttpStatus.UNPROCESSABLE_ENTITY, "목표 시간에 도달하지 않았습니다.");
+    SESSION_TARGET_NOT_REACHED(HttpStatus.UNPROCESSABLE_ENTITY, "목표 시간에 도달하지 않았습니다."),
+
+    // ROOM
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "방을 찾을 수 없습니다."),
+    ROOM_CODE_INVALID(HttpStatus.NOT_FOUND, "유효하지 않은 초대 코드입니다."),
+    ROOM_CODE_ISSUE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "초대 코드 생성에 실패했습니다."),
+    ROOM_ALREADY_MEMBER(HttpStatus.CONFLICT, "이미 참여 중인 방입니다."),
+    ROOM_FORBIDDEN_NOT_OWNER(HttpStatus.FORBIDDEN, "해당 작업에 권한이 없습니다."),
+    ROOM_FORBIDDEN_NOT_MEMBER(HttpStatus.FORBIDDEN, "방에 참여한 사용자만 접근할 수 있습니다."),
+    ROOM_OWNER_CANNOT_LEAVE(HttpStatus.UNPROCESSABLE_ENTITY, "방장은 양도 후 나갈 수 있습니다."),
+    ROOM_OWNER_TRANSFER_SELF(HttpStatus.CONFLICT, "본인에게 방장을 양도할 수 없습니다."),
+    ROOM_FULL(HttpStatus.CONFLICT, "방 인원이 가득 찼습니다."),
+    ROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "방 멤버를 찾을 수 없습니다."),
+    ;
 
     private final HttpStatus status;
     private final String message;
