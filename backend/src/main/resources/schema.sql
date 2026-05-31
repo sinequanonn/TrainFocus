@@ -86,3 +86,32 @@ CREATE TABLE IF NOT EXISTS `session_legs`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `rooms`
+(
+    `id`                BIGINT NOT NULL AUTO_INCREMENT,
+    `name`              VARCHAR(20) NOT NULL,
+    `code`              VARCHAR(8) NOT NULL,
+    `created_at`        DATETIME(6) NOT NULL,
+    `updated_at`        DATETIME(6) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_rooms_code` (`code`)
+) ENGINE = InnoDB
+    DEFAULT CHARSET = utf8mb4
+    COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `room_users`
+(
+    `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+    `room_id`    BIGINT       NOT NULL,
+    `user_id`    BIGINT       NOT NULL,
+    `role`       VARCHAR(10)  NOT NULL,
+    `created_at` DATETIME(6)  NOT NULL,
+    `updated_at` DATETIME(6)  NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_room_users_room_user` (`room_id`, `user_id`),
+    CONSTRAINT `fk_room_users_room` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`),
+    CONSTRAINT `fk_room_users_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE = InnoDB
+    DEFAULT CHARSET = utf8mb4
+    COLLATE = utf8mb4_unicode_ci;
