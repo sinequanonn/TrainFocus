@@ -6,7 +6,6 @@ public enum FocusSessionStatus {
     COMPLETED,
     ABORTED;
 
-
     public boolean isEnded() {
         return this == COMPLETED || this == ABORTED;
     }
