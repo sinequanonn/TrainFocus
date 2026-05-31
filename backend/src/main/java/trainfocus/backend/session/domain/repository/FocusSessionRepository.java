@@ -12,6 +12,7 @@ import trainfocus.backend.user.domain.User;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface FocusSessionRepository extends JpaRepository<FocusSession, Long> {
@@ -44,4 +45,11 @@ public interface FocusSessionRepository extends JpaRepository<FocusSession, Long
     long countByStatusIn(Collection<FocusSessionStatus> statuses);
 
     long countByStartedAtGreaterThanEqual(LocalDateTime startedAtFrom);
+
+    @Query("SELECT fs FROM FocusSession fs " +
+            "JOIN FETCH fs.departureStation " +
+            "JOIN FETCH fs.arrivalStation " +
+            "WHERE fs.user.id IN :userIds AND fs.status IN :statuses")
+    List<FocusSession> findActiveByUserIds(@Param("userIds") List<Long> userIds,
+                                           @Param("statuses")Collection<FocusSessionStatus> statuses);
 }

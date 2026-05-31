@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Station } from '@/lib/api/stations';
-import { KoreaMap } from '@/components/map/KoreaMap';
+import { KoreaMap, LiveRunner } from '@/components/map/KoreaMap';
+import { RoomResponse } from '@/lib/api/rooms';
 import { useDocumentPiP } from '@/lib/hooks/useDocumentPiP';
 import { FocusPipContent } from './FocusPipContent';
 
@@ -40,6 +41,10 @@ interface Props {
   onResume: () => void;
   onComplete: () => void;
   onAbort: () => void;
+  liveRunners?: LiveRunner[];
+  myRooms?: RoomResponse[];
+  selectedRoom?: RoomResponse | null;
+  onSelectRoom?: (room: RoomResponse | null) => void;
 }
 
 export function FocusScreen({
@@ -53,6 +58,10 @@ export function FocusScreen({
   onResume,
   onComplete,
   onAbort,
+  liveRunners,
+  myRooms = [],
+  selectedRoom = null,
+  onSelectRoom,
 }: Props) {
   const [timerMode, setTimerMode] = useState<TimerMode>('remaining');
   const [open, setOpen] = useState(true);
@@ -101,6 +110,7 @@ export function FocusScreen({
           progress={progressPct / 100}
           active={true}
           maxZoom={18}
+          liveRunners={liveRunners}
         />
       </div>
 
@@ -172,11 +182,38 @@ export function FocusScreen({
             </div>
 
             {/* 노선 */}
-            <div className="mb-5 text-center text-sm font-bold text-gray-700 dark:text-gray-200">
+            <div className="mb-3 text-center text-sm font-bold text-gray-700 dark:text-gray-200">
               {departure.name}{' '}
               <span className="text-gray-300 dark:text-gray-600">→</span>{' '}
               {arrival.name}
             </div>
+
+            {/* 함께 달리기 선택 */}
+            {myRooms.length > 0 && onSelectRoom && (
+              <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-700">
+                <select
+                  value={selectedRoom ? String(selectedRoom.id) : ''}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    if (!id) {
+                      onSelectRoom(null);
+                    } else {
+                      const r = myRooms.find((m) => String(m.id) === id);
+                      if (r) onSelectRoom(r);
+                    }
+                  }}
+                  className="w-full bg-transparent text-xs font-medium outline-none dark:text-gray-100"
+                  title="방을 선택해서 함께 달리기 현황 보기"
+                >
+                  <option value="">🏃 혼자 달리기</option>
+                  {myRooms.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      🏃 {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* 타이머 모드 토글 */}
             <div className="mb-3 inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-[11px] font-bold dark:border-gray-700 dark:bg-gray-700">
