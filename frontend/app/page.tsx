@@ -19,12 +19,27 @@ import {
 } from '@/lib/api/sessions';
 import { ApiError } from '@/lib/api/client';
 import { GuideModal } from '@/components/ui/GuideModal';
+import { getMyRooms, getRoomLive, RoomResponse } from '@/lib/api/rooms';
+import { LiveRunner } from '@/components/map/KoreaMap';
 import { BookingScreen } from '@/components/booking/BookingScreen';
 import { TicketScreen } from '@/components/booking/TicketScreen';
 import { FocusScreen } from '@/components/focus/FocusScreen';
 import { ArrivalModal } from '@/components/focus/ArrivalModal';
 
 const GUIDE_SEEN_KEY = 'trainfocus.guide.seen';
+
+const LIVE_POLL_INTERVAL_MS = 5000;
+const RUNNER_COLORS = [
+  '#2AC1BC',
+  '#F59E0B',
+  '#8B5CF6',
+  '#EC4899',
+  '#10B981',
+  '#3B82F6',
+];
+function colorForUser(userId: number) {
+  return RUNNER_COLORS[Math.abs(userId) % RUNNER_COLORS.length];
+}
 
 type Screen = 'booking' | 'ticket' | 'focus';
 
@@ -53,6 +68,9 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [myRooms, setMyRooms] = useState<RoomResponse[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<RoomResponse | null>(null);
+  const [liveRunners, setLiveRunners] = useState<LiveRunner[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 도착 안내 모달 — 수동/자동 도착 모두 사용
@@ -170,6 +188,75 @@ export default function HomePage() {
     // handleAutoComplete 는 함수형이라 deps 에서 안전하게 제외
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accumulatedSeconds, session?.status, session?.totalTargetSeconds]);
+
+  // 내 방 목록 — 헤더 드롭다운 옵션
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rooms = await getMyRooms();
+        if (!cancelled) setMyRooms(rooms);
+      } catch (e) {
+        if (e instanceof Error) console.warn('[my rooms]', e.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // 선택된 방의 동료 라이브 폴링 (본인 제외)
+  useEffect(() => {
+    if (!selectedRoom || !me) {
+      setLiveRunners([]);
+      return;
+    }
+    let cancelled = false;
+    const myUserId = me.userId;
+    const roomId = selectedRoom.id;
+    const fetchLive = async () => {
+      try {
+        const list = await getRoomLive(roomId);
+        if (cancelled) return;
+        const runners: LiveRunner[] = list
+          .filter((m) => m.session !== null && m.userId !== myUserId)
+          .map((m) => {
+            const s = m.session!;
+            const ratio = Math.min(
+              1,
+              s.accumulatedSeconds / Math.max(1, s.totalTargetSeconds)
+            );
+            return {
+              userId: m.userId,
+              nickname: m.nickname,
+              isRunning: s.status === 'RUNNING',
+              color: colorForUser(m.userId),
+              departure: {
+                lat: Number(s.departure.latitude),
+                lng: Number(s.departure.longitude),
+                name: s.departure.name,
+              },
+              arrival: {
+                lat: Number(s.arrival.latitude),
+                lng: Number(s.arrival.longitude),
+                name: s.arrival.name,
+              },
+              progress: ratio,
+            };
+          });
+        setLiveRunners(runners);
+      } catch (e) {
+        if (e instanceof Error) console.warn('[live poll]', e.message);
+      }
+    };
+    void fetchLive();
+    const id = setInterval(fetchLive, LIVE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [selectedRoom, me]);
 
   function handleError(e: unknown) {
     if (e instanceof ApiError) {
@@ -407,6 +494,21 @@ export default function HomePage() {
                 className="cursor-not-allowed rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-300 dark:bg-gray-700 dark:text-gray-600"
                 title="운행 중에는 이동할 수 없습니다"
               >
+                함께 달리기
+              </span>
+            ) : (
+              <Link
+                href="/rooms"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                함께 달리기
+              </Link>
+            )}
+            {isRunning ? (
+              <span
+                className="cursor-not-allowed rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-300 dark:bg-gray-700 dark:text-gray-600"
+                title="운행 중에는 이동할 수 없습니다"
+              >
                 이동 기록
               </span>
             ) : (
@@ -447,6 +549,10 @@ export default function HomePage() {
           onStationClick={handleStationClick}
           onSubmit={handleBookingSubmit}
           busy={busy}
+          liveRunners={liveRunners}
+          myRooms={myRooms}
+          selectedRoom={selectedRoom}
+          onSelectRoom={setSelectedRoom}
         />
       )}
 
@@ -480,6 +586,10 @@ export default function HomePage() {
           onResume={handleResume}
           onComplete={handleComplete}
           onAbort={handleAbort}
+          liveRunners={liveRunners}
+          myRooms={myRooms}
+          selectedRoom={selectedRoom}
+          onSelectRoom={setSelectedRoom}
         />
       )}
 

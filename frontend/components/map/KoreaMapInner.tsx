@@ -11,6 +11,7 @@ import {
 import { divIcon, type LatLngBoundsExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Station } from '@/lib/api/stations';
+import type { LiveRunner } from './KoreaMap';
 
 // 한반도 대략 bbox (제주 포함)
 const KOREA_BOUNDS: LatLngBoundsExpression = [
@@ -71,6 +72,7 @@ interface Props {
   active?: boolean;
   markerVariant?: 'circle' | 'pin' | 'train';
   maxZoom?: number;
+  liveRunners?: LiveRunner[];
 }
 
 function makeStationIcon(opts: {
@@ -164,6 +166,48 @@ function makeStationIcon(opts: {
     className: '',
     iconSize: [0, 0],
     iconAnchor: [0, 0],
+  });
+}
+
+/** 동료 마커 — 방 라이브에서 본인 외 멤버 표시 */
+function makeRunnerIcon(opts: {
+  nickname: string;
+  color: string;
+  isRunning: boolean;
+}) {
+  const { nickname, color, isRunning } = opts;
+  const size = 28;
+  const opacity = isRunning ? 1 : 0.55;
+  return divIcon({
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;opacity:${opacity};">
+        <div style="
+          width:${size}px;height:${size}px;
+          background:${color};
+          color:white;
+          border:2px solid rgba(255,255,255,0.85);
+          border-radius:9999px;
+          display:flex;align-items:center;justify-content:center;
+          font-size:13px;
+          box-shadow:0 2px 4px rgba(0,0,0,0.25);
+        ">${isRunning ? '🏃' : '⏸'}</div>
+        <span style="
+          margin-top:2px;
+          padding:1px 5px;
+          font-size:9px;
+          font-weight:700;
+          color:white;
+          background:${color};
+          border-radius:6px;
+          white-space:nowrap;
+          max-width:80px;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        ">${nickname}</span>
+      </div>`,
+    className: '',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 
@@ -272,6 +316,7 @@ export function KoreaMapInner({
   active = false,
   markerVariant = 'circle',
   maxZoom = 16,
+  liveRunners = [],
 }: Props) {
   const isDark = useDarkMode();
   const [tileType, setTileType] = useState<TileType>('map');
@@ -365,6 +410,41 @@ export function KoreaMapInner({
         )}
 
         {trainPos && <Marker position={trainPos} icon={TRAIN_DOT_ICON} />}
+
+        {liveRunners.map((r) => (
+          <Polyline
+            key={`live-line-${r.userId}`}
+            positions={[
+              [r.departure.lat, r.departure.lng],
+              [r.arrival.lat, r.arrival.lng],
+            ]}
+            pathOptions={{
+              color: r.color,
+              weight: 2,
+              opacity: r.isRunning ? 0.55 : 0.3,
+              dashArray: r.isRunning ? '4 4' : '6 6',
+            }}
+          />
+        ))}
+
+        {liveRunners.map((r) => {
+          const lat =
+            r.departure.lat + (r.arrival.lat - r.departure.lat) * r.progress;
+          const lng =
+            r.departure.lng + (r.arrival.lng - r.departure.lng) * r.progress;
+          return (
+            <Marker
+              key={`live-runner-${r.userId}`}
+              position={[lat, lng]}
+              icon={makeRunnerIcon({
+                nickname: r.nickname,
+                color: r.color,
+                isRunning: r.isRunning,
+              })}
+              interactive={false}
+            />
+          );
+        })}
       </MapContainer>
 
       {/* "현재 위치로" 버튼 — focus 모드에서 follow 꺼져 있을 때만 표시 */}
