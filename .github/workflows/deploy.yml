@@ -70,6 +70,7 @@ jobs:
 
             cat > .env <<EOF
             MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_EXPORTER_PASSWORD=${{ secrets.MYSQL_EXPORTER_PASSWORD }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             BACKEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
             EOF
