@@ -58,6 +58,9 @@ public class FocusSession extends BaseEntity {
 
     private LocalDateTime endedAt;
 
+    @Column
+    private Integer focusSeconds;
+
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("legNumber ASC")
     private final List<Leg> legs = new ArrayList<>();
@@ -129,6 +132,7 @@ public class FocusSession extends BaseEntity {
         }
         this.status = FocusSessionStatus.COMPLETED;
         this.endedAt = now;
+        this.focusSeconds = accumulatedSeconds();
         this.user.updateDepartureStation(this.arrivalStation);
     }
 
@@ -141,6 +145,7 @@ public class FocusSession extends BaseEntity {
         }
         this.status = FocusSessionStatus.ABORTED;
         this.endedAt = now;
+        this.focusSeconds = accumulatedSeconds();
     }
 
     public int totalTargetSeconds() {
@@ -201,6 +206,7 @@ public class FocusSession extends BaseEntity {
         currentLeg().end(reachTime);
         this.status = FocusSessionStatus.COMPLETED;
         this.endedAt = reachTime;
+        this.focusSeconds = accumulatedSeconds();
         this.user.updateDepartureStation(this.arrivalStation);
     }
 
