@@ -22,7 +22,9 @@ import trainfocus.backend.user.domain.User;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -236,6 +238,32 @@ class FocusSessionRepositoryTest {
 
         // then
         assertThat(sum).isEqualTo(240);
+    }
+
+    @Test
+    void sumFocusByUsers_유저별_집중시간_합산() {
+        User u1 = persistUser("rank-1");
+        User u2 = persistUser("rank-2");
+        Station dep = persistStation("강남");
+        Station arr = persistStation("서울역");
+        saveCompleted(u1, dep, arr, LocalDateTime.of(2026, 6, 10, 9, 0), 1);   // 60
+        saveCompleted(u1, dep, arr, LocalDateTime.of(2026, 6, 10, 10, 0), 2);  // 120
+        saveAborted(u2, dep, arr, LocalDateTime.of(2026, 6, 10, 11, 0), 90);   // 90
+        saveCompleted(u1, dep, arr, LocalDateTime.of(2026, 6, 12, 9, 0), 1);   // 범위 밖
+        entityManager.flush();
+        entityManager.clear();
+
+        List<RoomRankingProjection> rows = focusSessionRepository.sumFocusByUsers(
+                List.of(u1.getId(), u2.getId()),
+                List.of(FocusSessionStatus.COMPLETED, FocusSessionStatus.ABORTED),
+                LocalDateTime.of(2026, 6, 10, 0, 0),
+                LocalDateTime.of(2026, 6, 11, 0, 0)
+        );
+
+        Map<Long, Long> byUser = rows.stream().collect(
+                Collectors.toMap(RoomRankingProjection::getUserId, RoomRankingProjection::getRunSeconds));
+        assertThat(byUser.get(u1.getId())).isEqualTo(180L);
+        assertThat(byUser.get(u2.getId())).isEqualTo(90L);
     }
 
     private void saveCompleted(User u, Station dep, Station arr, LocalDateTime start, int baseMinutes) {

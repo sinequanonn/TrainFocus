@@ -9,21 +9,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import trainfocus.backend.common.exception.BusinessException;
 import trainfocus.backend.common.exception.ErrorCode;
+import trainfocus.backend.room.application.dto.RoomRankingResponse;
 import trainfocus.backend.room.application.dto.RoomUserLiveResponse;
-import trainfocus.backend.room.domain.CodeGenerator;
-import trainfocus.backend.room.domain.Room;
-import trainfocus.backend.room.domain.RoomFixture;
-import trainfocus.backend.room.domain.RoomUser;
-import trainfocus.backend.room.domain.RoomUserFixture;
+import trainfocus.backend.room.domain.*;
 import trainfocus.backend.room.domain.repository.RoomRepository;
 import trainfocus.backend.room.domain.repository.RoomUserRepository;
 import trainfocus.backend.session.domain.FocusSession;
 import trainfocus.backend.session.domain.repository.FocusSessionRepository;
+import trainfocus.backend.session.domain.repository.RoomRankingProjection;
 import trainfocus.backend.station.domain.Station;
 import trainfocus.backend.station.domain.StationFixture;
 import trainfocus.backend.user.domain.User;
 import trainfocus.backend.user.domain.UserFixture;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +30,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RoomServiceTest {
@@ -522,6 +519,7 @@ class RoomServiceTest {
         RoomUser ownerMembership = RoomUserFixture.owner(10L, room, owner);
         given(roomUserRepository.findByRoomIdAndUserId(1L, owner.getId()))
                 .willReturn(Optional.of(ownerMembership));
+        given(roomUserRepository.countByRoomId(1L)).willReturn(1L);
 
         roomService.deleteRoom(1L, owner);
 
@@ -540,5 +538,59 @@ class RoomServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.ROOM_FORBIDDEN_NOT_OWNER));
+    }
+
+    @Test
+    void deleteRoom_다른_멤버_있으면_ROOM_NOT_EMPTY() {
+        Room room = RoomFixture.of(1L, "방", "ABCD1234");
+        RoomUser ownerMembership = RoomUserFixture.owner(10L, room, owner);
+        given(roomUserRepository.findByRoomIdAndUserId(1L, owner.getId()))
+                .willReturn(Optional.of(ownerMembership));
+        given(roomUserRepository.countByRoomId(1L)).willReturn(2L);
+
+        assertThatThrownBy(() -> roomService.deleteRoom(1L, owner))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.ROOM_NOT_EMPTY));
+    }
+
+    // ===================== findRanking =====================
+
+    private RoomRankingProjection rankRow(Long userId, long seconds) {
+        return new RoomRankingProjection() {
+            @Override public Long getUserId() { return userId; }
+            @Override public long getRunSeconds() { return seconds; }
+        };
+    }
+
+    @Test
+    void findRanking_집계로_순위_응답() {
+        Room room = RoomFixture.of(1L, "방", "ABCD1234");
+        given(roomUserRepository.existsByRoomIdAndUserId(1L, owner.getId())).willReturn(true);
+        given(roomUserRepository.findWithUserByRoomId(1L)).willReturn(List.of(
+                RoomUserFixture.owner(10L, room, owner),
+                RoomUserFixture.member(11L, room, member)
+        ));
+        given(focusSessionRepository.sumFocusByUsers(any(), any(), any(), any()))
+                .willReturn(List.of(rankRow(member.getId(), 300L), rankRow(owner.getId(), 100L)));
+
+        RoomRankingResponse res = roomService.findRanking(
+                1L, owner, LocalDate.of(2026, 6, 3), RankPeriod.WEEK);
+
+        assertThat(res.entries()).hasSize(2);
+        assertThat(res.entries().get(0).userId()).isEqualTo(member.getId());
+        assertThat(res.entries().get(0).rank()).isEqualTo(1);
+        assertThat(res.entries().get(1).userId()).isEqualTo(owner.getId());
+    }
+
+    @Test
+    void findRanking_멤버_아니면_ROOM_FORBIDDEN_NOT_MEMBER() {
+        given(roomUserRepository.existsByRoomIdAndUserId(1L, outsider.getId())).willReturn(false);
+
+        assertThatThrownBy(() -> roomService.findRanking(
+                1L, outsider, LocalDate.of(2026, 6, 3), RankPeriod.WEEK))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                        .isEqualTo(ErrorCode.ROOM_FORBIDDEN_NOT_MEMBER));
     }
 }
