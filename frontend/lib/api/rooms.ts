@@ -119,3 +119,26 @@ export async function getRoomLive(
 ): Promise<RoomUserLiveResponse[]> {
   return apiClient<RoomUserLiveResponse[]>(`/api/rooms/${roomId}/live`);
 }
+
+export interface RoomRankingEntry {
+  rank: number;
+  userId: number;
+  nickname: string;
+  runSeconds: number;
+}
+
+export interface RoomRankingResponse {
+  date: string;
+  period: string;
+  entries: RoomRankingEntry[];
+}
+
+export async function getRoomRanking(
+  roomId: number,
+  date: string,
+  period: string
+): Promise<RoomRankingResponse> {
+  return apiClient<RoomRankingResponse>(
+    `/api/rooms/${roomId}/ranking?date=${date}&period=${period}`
+  );
+}

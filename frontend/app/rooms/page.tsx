@@ -60,9 +60,9 @@ export default function RoomsPage() {
         ← 홈
       </Link>
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold dark:text-gray-100 md:text-3xl">
-          방
+          함께 몰입
         </h1>
         <div className="flex gap-2">
           <button

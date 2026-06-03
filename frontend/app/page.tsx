@@ -455,14 +455,14 @@ export default function HomePage() {
                 className="cursor-not-allowed rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-300 dark:bg-gray-700 dark:text-gray-600"
                 title="운행 중에는 이동할 수 없습니다"
               >
-                함께 달리기
+                함께 몰입
               </span>
             ) : (
               <Link
                 href="/rooms"
                 className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                함께 달리기
+                함께 몰입
               </Link>
             )}
             {isRunning ? (

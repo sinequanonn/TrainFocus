@@ -203,9 +203,9 @@ export function FocusScreen({
                     }
                   }}
                   className="w-full bg-transparent text-xs font-medium outline-none dark:text-gray-100"
-                  title="방을 선택해서 함께 달리기 현황 보기"
+                  title="방을 선택해서 함께 몰입 현황 보기"
                 >
-                  <option value="">🏃 혼자 달리기</option>
+                  <option value="">🏃 혼자 몰입</option>
                   {myRooms.map((r) => (
                     <option key={r.id} value={r.id}>
                       🏃 {r.name}
