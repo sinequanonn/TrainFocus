@@ -1,8 +1,11 @@
 package trainfocus.backend.session.ui;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
+@Validated
 @RequestMapping("/api/sessions/log")
 public class RunningLogController {
 
@@ -27,8 +31,8 @@ public class RunningLogController {
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<RunningLogCalendarResponse>> calendar(
             @LoginUser User user,
-            @RequestParam int year,
-            @RequestParam int month
+            @RequestParam @Min(1) @Max(9999) int year,
+            @RequestParam @Min(1) @Max(12) int month
     ) {
         return ResponseEntity.ok(ApiResponse.of(runningLogService.getCalendar(user, year, month)));
     }

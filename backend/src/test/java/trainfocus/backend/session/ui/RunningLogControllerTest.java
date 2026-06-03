@@ -84,6 +84,16 @@ class RunningLogControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("COMMON_INVALID_PARAMETER"));
     }
 
+    @Test
+    void 달력_월_범위_벗어나면_400() throws Exception {
+        mockMvc.perform(get("/api/sessions/log/calendar")
+                        .header("Authorization", BEARER)
+                        .param("year", "2026")
+                        .param("month", "13"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("COMMON_INVALID_PARAMETER"));
+    }
+
     // ===================== GET /api/sessions/log/daily =====================
 
     @Test
