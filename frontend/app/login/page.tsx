@@ -52,65 +52,23 @@ export default function LoginPage() {
         <circle cx={160} cy={585} r={15} fill="#2AC1BC" />
       </svg>
 
-      {/* 흘러가는 역 이름 (구름 효과) */}
-      <div className="pointer-events-none absolute inset-x-0 top-24 overflow-hidden opacity-30">
-        <div className="marquee whitespace-nowrap text-6xl font-bold text-[#2AC1BC]/40 md:text-7xl">
-          <span className="mx-8">서울</span>
-          <span className="mx-8">대전</span>
-          <span className="mx-8">동대구</span>
-          <span className="mx-8">부산</span>
-          <span className="mx-8">광주</span>
-          <span className="mx-8">목포</span>
-          <span className="mx-8">강릉</span>
-          <span className="mx-8">울산</span>
-          <span className="mx-8">제주</span>
-          <span className="mx-8">서울</span>
-          <span className="mx-8">대전</span>
-          <span className="mx-8">동대구</span>
-          <span className="mx-8">부산</span>
-          <span className="mx-8">광주</span>
-          <span className="mx-8">목포</span>
-          <span className="mx-8">강릉</span>
-          <span className="mx-8">울산</span>
-          <span className="mx-8">제주</span>
-        </div>
-      </div>
-
-      <style jsx>{`
-        .marquee {
-          display: inline-block;
-          animation: scroll 60s linear infinite;
-        }
-        @keyframes scroll {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
-
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center px-6 py-12 md:px-10">
         <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-2">
           {/* 좌측: 소개 */}
           <section>
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#2AC1BC]">
-              ⏱ Focus Journey
-            </p>
             <h1 className="mb-4 text-4xl font-bold leading-tight md:text-5xl">
-              <span className="text-[#2AC1BC]">Train</span>{' '}
-              <span className="text-gray-800">Focus</span>
+              <span className="text-[#2AC1BC]">Focus</span>{' '}
+              <span className="text-gray-800">Train</span>
             </h1>
             <p className="mb-6 text-lg leading-relaxed text-gray-600">
               당신의 다음 집중지는 어디입니까?
               <br />
-              KTX를 타고 떠나는 몰입 여행.
+              기차를 타고 떠나는 우아한 몰입 훈련.
             </p>
 
             {/* 가치 키워드 */}
             <div className="mb-8 flex gap-2">
-              {['집중', '여정', '기록'].map((k) => (
+              {['집중', '여정', '기록', '함께'].map((k) => (
                 <span
                   key={k}
                   className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-[#2AC1BC] shadow-sm backdrop-blur"
@@ -133,23 +91,25 @@ export default function LoginPage() {
                 desc="목표 시간 동안 기차가 도착역까지 이동"
               />
               <Step
-                icon="🎉"
+                icon="🎟️"
                 title="도착하기"
-                desc="완주한 여정이 기록으로 누적"
+                desc="완주하면 그날의 운행 승차권이 발행돼요"
+              />
+              <Step
+                icon="🏆"
+                title="함께 몰입"
+                desc="방에서 동료와 몰입 시간 순위를 겨뤄요"
               />
             </ol>
 
             <p className="mt-8 text-xs text-gray-400">
-              현재 <b className="text-gray-600">9개 역 · 70개 노선</b> 운행 중
+              현재 <b className="text-gray-600">50+개 역 · 2,700+ 노선</b> 운행 중
             </p>
           </section>
 
           {/* 우측: 로그인 카드 */}
           <section className="flex justify-center lg:justify-end">
             <div className="w-full max-w-sm rounded-3xl border border-white bg-white/80 p-8 shadow-xl backdrop-blur-md">
-              <div className="mb-1 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EBFBFA] text-2xl">
-                🚄
-              </div>
               <h2 className="mb-2 text-2xl font-bold">탑승 준비</h2>
               <p className="mb-6 text-sm text-gray-500">
                 Google 계정으로 5초만에 시작하세요.

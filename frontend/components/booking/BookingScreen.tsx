@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Station } from '@/lib/api/stations';
-import { KoreaMap } from '@/components/map/KoreaMap';
+import { KoreaMap, LiveRunner } from '@/components/map/KoreaMap';
+import { RoomResponse } from '@/lib/api/rooms';
 
 interface Props {
   stations: Station[];
@@ -15,6 +16,11 @@ interface Props {
   onStationClick: (id: string) => void;
   onSubmit: () => void;
   busy: boolean;
+  liveRunners?: LiveRunner[];
+  myRooms?: RoomResponse[];
+  selectedRoom?: RoomResponse | null;
+  onSelectRoom?: (room: RoomResponse | null) => void;
+  onOpenGuide?: () => void;
 }
 
 export function BookingScreen({
@@ -28,6 +34,11 @@ export function BookingScreen({
   onStationClick,
   onSubmit,
   busy,
+  liveRunners,
+  myRooms = [],
+  selectedRoom = null,
+  onSelectRoom,
+  onOpenGuide,
 }: Props) {
   // 작은 화면 대응: 패널 접기/펴기. 마커 클릭 시 자동으로 다시 펼침.
   const [open, setOpen] = useState(true);
@@ -61,6 +72,7 @@ export function BookingScreen({
           onStationClick={handleMarkerClick}
           progress={0}
           active={false}
+          liveRunners={liveRunners}
         />
       </div>
 
@@ -74,6 +86,16 @@ export function BookingScreen({
                   🎫
                 </span>{' '}
                 승차권 예매
+                {onOpenGuide && (
+                  <button
+                    onClick={onOpenGuide}
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 text-xs font-bold text-gray-400 transition hover:border-[#2AC1BC] hover:text-[#2AC1BC] dark:border-gray-700 dark:text-gray-500"
+                    title="사용법 보기"
+                    aria-label="사용법 보기"
+                  >
+                    ?
+                  </button>
+                )}
               </h2>
               <button
                 onClick={() => setOpen(false)}
@@ -154,6 +176,39 @@ export function BookingScreen({
                   <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
                     기본 {previewMinutes}분 + 지연 {delayMinutes}분
                   </p>
+                </div>
+              )}
+
+              {myRooms.length > 0 && onSelectRoom && (
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase text-gray-400 dark:text-gray-500">
+                    함께 몰입
+                  </label>
+                  <select
+                    value={selectedRoom ? String(selectedRoom.id) : ''}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      if (!id) {
+                        onSelectRoom(null);
+                      } else {
+                        const r = myRooms.find((m) => String(m.id) === id);
+                        if (r) onSelectRoom(r);
+                      }
+                    }}
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 outline-none focus:border-[#2AC1BC] dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100"
+                  >
+                    <option value="">혼자 몰입</option>
+                    {myRooms.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedRoom && (
+                    <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                      방 멤버의 진행 상황이 지도에 표시됩니다.
+                    </p>
+                  )}
                 </div>
               )}
 

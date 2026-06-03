@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 /**
  * 라이트/다크 테마 토글 버튼 (우상단 고정).
@@ -8,6 +9,7 @@ import { useEffect, useState } from 'react';
  * - 클릭 시 .dark 토글 + localStorage 저장
  */
 export function ThemeToggle() {
+  const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
 
   // 마운트 시 현재 <html> 의 .dark 여부로 상태 동기화 (hydration 안전)
@@ -25,6 +27,8 @@ export function ThemeToggle() {
       /* localStorage 접근 불가 시 무시 */
     }
   }
+
+  if (pathname === '/login') return null;
 
   return (
     <button

@@ -3,6 +3,16 @@
 import dynamic from 'next/dynamic';
 import type { Station } from '@/lib/api/stations';
 
+export interface LiveRunner {
+  userId: number;
+  nickname: string;
+  isRunning: boolean;
+  color: string;
+  departure: { lat: number; lng: number; name: string };
+  arrival: { lat: number; lng: number; name: string };
+  progress: number;
+}
+
 const KoreaMapInner = dynamic(
   () => import('./KoreaMapInner').then((m) => m.KoreaMapInner),
   {
@@ -26,6 +36,8 @@ export interface KoreaMapProps {
   markerVariant?: 'circle' | 'pin' | 'train';
   /** 최대 줌 — 기본 16, focus 모드에서는 18 권장 */
   maxZoom?: number;
+  /** 같은 방 동료들의 실시간 진행 — 본인 외 멤버 */
+  liveRunners?: LiveRunner[];
 }
 
 export function KoreaMap(props: KoreaMapProps) {
