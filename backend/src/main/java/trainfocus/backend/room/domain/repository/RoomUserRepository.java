@@ -1,5 +1,6 @@
 package trainfocus.backend.room.domain.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import trainfocus.backend.room.domain.RoomUser;
 
@@ -19,4 +20,7 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, Long> {
     long countByRoomId(Long roomId);
 
     void deleteByRoomId(Long roomId);
+
+    @EntityGraph(attributePaths = {"user"})
+    List<RoomUser> findWithUserByRoomId(Long roomId);
 }
