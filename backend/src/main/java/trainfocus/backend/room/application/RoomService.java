@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import trainfocus.backend.common.exception.BusinessException;
 import trainfocus.backend.common.exception.ErrorCode;
+import trainfocus.backend.room.application.dto.RoomRankingResponse;
 import trainfocus.backend.room.application.dto.RoomUserLiveResponse;
 import trainfocus.backend.room.domain.CodeGenerator;
+import trainfocus.backend.room.domain.RankPeriod;
 import trainfocus.backend.room.domain.Room;
 import trainfocus.backend.room.domain.RoomUser;
 import trainfocus.backend.room.domain.repository.RoomRepository;
@@ -15,8 +17,10 @@ import trainfocus.backend.room.domain.repository.RoomUserRepository;
 import trainfocus.backend.session.domain.FocusSession;
 import trainfocus.backend.session.domain.FocusSessionStatus;
 import trainfocus.backend.session.domain.repository.FocusSessionRepository;
+import trainfocus.backend.session.domain.repository.RoomRankingProjection;
 import trainfocus.backend.user.domain.User;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +31,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class RoomService {
 
+    private static final List<FocusSessionStatus> ENDED_STATUSES =
+            List.of(FocusSessionStatus.COMPLETED, FocusSessionStatus.ABORTED);
     private static final int MAX_MEMBERS_PER_ROOM = 6;
 
     private final RoomRepository roomRepository;
@@ -161,9 +167,27 @@ public class RoomService {
     @Transactional
     public void deleteRoom(Long roomId, User user) {
         verifyOwnership(roomId, user.getId());
+        if (roomUserRepository.countByRoomId(roomId) > 1) {
+            throw new BusinessException(ErrorCode.ROOM_NOT_EMPTY);
+        }
         roomUserRepository.deleteByRoomId(roomId);
         roomUserRepository.flush();
         roomRepository.deleteById(roomId);
+    }
+
+    public RoomRankingResponse findRanking(Long roomId, User user, LocalDate date, RankPeriod period) {
+        verifyMembership(roomId, user.getId());
+        List<RoomUser> members = roomUserRepository.findWithUserByRoomId(roomId);
+
+        List<Long> userIds = members.stream().map(ru -> ru.getUser().getId()).toList();
+        Map<Long, Long> secondsByUser = focusSessionRepository.sumFocusByUsers(
+                        userIds, ENDED_STATUSES, period.startOf(date), period.endOf(date))
+                .stream()
+                .collect(Collectors.toMap(
+                        RoomRankingProjection::getUserId,
+                        RoomRankingProjection::getRunSeconds));
+
+        return RoomRankingResponse.of(date, period, members, secondsByUser);
     }
 
     private RoomUser verifyOwnership(Long roomId, Long userId) {
