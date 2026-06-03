@@ -51,5 +51,51 @@ public interface FocusSessionRepository extends JpaRepository<FocusSession, Long
             "JOIN FETCH fs.arrivalStation " +
             "WHERE fs.user.id IN :userIds AND fs.status IN :statuses")
     List<FocusSession> findActiveByUserIds(@Param("userIds") List<Long> userIds,
-                                           @Param("statuses")Collection<FocusSessionStatus> statuses);
+                                           @Param("statuses") Collection<FocusSessionStatus> statuses);
+
+    @Query("""
+            SELECT FUNCTION('DATE', fs.startedAt) AS date,
+                   COUNT(fs) AS sessionCount,
+                   SUM(CASE WHEN fs.status = :completed THEN 1 ELSE 0 END) AS arrivedCount,
+                   COALESCE(SUM(fs.focusSeconds), 0) AS runSeconds
+            FROM FocusSession fs
+            WHERE fs.user = :user
+              AND fs.status IN :statuses
+              AND fs.startedAt >= :from AND fs.startedAt < :to
+            GROUP BY FUNCTION('DATE', fs.startedAt)
+            ORDER BY FUNCTION('DATE', fs.startedAt)
+            """)
+    List<CalendarDayProjection> aggregateDailyFocus(
+            @Param("user") User user,
+            @Param("statuses") Collection<FocusSessionStatus> statuses,
+            @Param("completed") FocusSessionStatus completed,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @EntityGraph(attributePaths = {"departureStation", "arrivalStation"})
+    @Query("""
+            SELECT fs FROM FocusSession fs
+            WHERE fs.user = :user
+              AND fs.status IN :statuses
+              AND fs.startedAt >= :from AND fs.startedAt < :to
+            ORDER BY fs.startedAt ASC
+            """)
+    List<FocusSession> findSessionsBetween(
+            @Param("user") User user,
+            @Param("statuses") Collection<FocusSessionStatus> statuses,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("""
+            SELECT COALESCE(SUM(fs.focusSeconds), 0)
+            FROM FocusSession fs
+            WHERE fs.user = :user
+              AND fs.status IN :statuses
+              AND fs.startedAt >= :from AND fs.startedAt < :to
+            """)
+    long sumFocusSecondsBetween(
+            @Param("user") User user,
+            @Param("statuses") Collection<FocusSessionStatus> statuses,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }
