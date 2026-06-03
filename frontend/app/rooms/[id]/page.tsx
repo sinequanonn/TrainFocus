@@ -14,7 +14,9 @@ import {
   reIssueCode,
   renameRoom,
   RoomResponse,
+  RoomRankingEntry,
   RoomUserLiveResponse,
+  getRoomRanking,
   transferOwner,
 } from '@/lib/api/rooms';
 import { ApiError } from '@/lib/api/client';
@@ -223,77 +225,80 @@ export default function RoomDetailPage({
             <h1 className="text-2xl font-bold dark:text-gray-100 md:text-3xl">
               {room.name}
             </h1>
+
+            <div className="mt-6 border-t border-gray-100 pt-5 dark:border-gray-700">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold dark:text-gray-100">
+                  멤버 ({members.length})
+                </h2>
+                <button
+                  onClick={() => setShowInvite(true)}
+                  className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium hover:border-[#2AC1BC] hover:text-[#2AC1BC] dark:border-gray-600 dark:text-gray-200"
+                >
+                  + 초대
+                </button>
+              </div>
+              {members.length === 0 ? (
+                <p className="text-sm italic text-gray-400 dark:text-gray-500">
+                  멤버가 없습니다.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {members.map((m) => {
+                    const isMe = m.userId === myUserId;
+                    return (
+                      <li
+                        key={m.userId}
+                        className="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                              {m.nickname}
+                              {isMe && (
+                                <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">
+                                  (나)
+                                </span>
+                              )}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                m.role === 'OWNER'
+                                  ? 'bg-[#EBFBFA] text-[#2AC1BC] dark:bg-[#14302f]'
+                                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                              }`}
+                            >
+                              {m.role === 'OWNER' ? '방장' : '멤버'}
+                            </span>
+                          </div>
+                          {room.role === 'OWNER' && !isMe && (
+                            <KebabMenu
+                              items={[
+                                {
+                                  label: '방장 양도',
+                                  onClick: () =>
+                                    handleTransfer(m.userId, m.nickname),
+                                },
+                                {
+                                  label: '강퇴',
+                                  onClick: () =>
+                                    handleKick(m.userId, m.nickname),
+                                  danger: true,
+                                },
+                              ]}
+                            />
+                          )}
+                        </div>
+                        <MemberStatus session={m.session} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </section>
 
-          <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold dark:text-gray-100">
-                멤버 ({members.length})
-              </h2>
-              <button
-                onClick={() => setShowInvite(true)}
-                className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium hover:border-[#2AC1BC] hover:text-[#2AC1BC] dark:border-gray-600 dark:text-gray-200"
-              >
-                + 초대
-              </button>
-            </div>
-            {members.length === 0 ? (
-              <p className="text-sm italic text-gray-400 dark:text-gray-500">
-                멤버가 없습니다.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {members.map((m) => {
-                  const isMe = m.userId === myUserId;
-                  return (
-                    <li
-                      key={m.userId}
-                      className="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                            {m.nickname}
-                            {isMe && (
-                              <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">
-                                (나)
-                              </span>
-                            )}
-                          </span>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                              m.role === 'OWNER'
-                                ? 'bg-[#EBFBFA] text-[#2AC1BC] dark:bg-[#14302f]'
-                                : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-                            }`}
-                          >
-                            {m.role === 'OWNER' ? '방장' : '멤버'}
-                          </span>
-                        </div>
-                        {room.role === 'OWNER' && !isMe && (
-                          <KebabMenu
-                            items={[
-                              {
-                                label: '방장 양도',
-                                onClick: () =>
-                                  handleTransfer(m.userId, m.nickname),
-                              },
-                              {
-                                label: '강퇴',
-                                onClick: () => handleKick(m.userId, m.nickname),
-                                danger: true,
-                              },
-                            ]}
-                          />
-                        )}
-                      </div>
-                      <MemberStatus session={m.session} />
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
+          <RoomRanking roomId={roomId} myUserId={myUserId} />
 
           {showInvite && (
             <InviteModal
@@ -321,6 +326,266 @@ export default function RoomDetailPage({
         </>
       )}
     </main>
+  );
+}
+
+type RankWindow = 'day' | 'week' | 'month';
+
+const RANK_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const RANK_WINDOW_TABS: Record<RankWindow, string> = {
+  day: '오늘',
+  week: '주간',
+  month: '월간',
+};
+
+function rankToday(): Date {
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  return t;
+}
+
+function rankMonthCells(year: number, month: number): (Date | null)[] {
+  const first = new Date(year, month, 1);
+  const pad = first.getDay();
+  const total = new Date(year, month + 1, 0).getDate();
+  const cells: (Date | null)[] = [];
+  for (let i = 0; i < pad; i++) cells.push(null);
+  for (let d = 1; d <= total; d++) cells.push(new Date(year, month, d));
+  return cells;
+}
+
+function rankDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate()
+  ).padStart(2, '0')}`;
+}
+
+function formatRun(sec: number): string {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}시간 ${m}분`;
+  if (h > 0) return `${h}시간`;
+  return `${m}분`;
+}
+
+function RoomRanking({
+  roomId,
+  myUserId,
+}: {
+  roomId: number;
+  myUserId: number | null;
+}) {
+  const [selected, setSelected] = useState<Date>(() => rankToday());
+  const [range, setRange] = useState<RankWindow>('day');
+  const [entries, setEntries] = useState<RoomRankingEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    getRoomRanking(roomId, rankDateStr(selected), range)
+      .then((r) => {
+        if (alive) {
+          setEntries(r.entries);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (alive) {
+          setEntries([]);
+          setLoading(false);
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [roomId, selected, range]);
+
+  const max = entries[0]?.runSeconds ?? 0;
+
+  return (
+    <section className="mb-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <h2 className="mb-4 text-lg font-bold dark:text-gray-100">몰입 순위</h2>
+
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+        <div className="lg:w-[300px] lg:shrink-0">
+          <RankCalendar selected={selected} onSelect={setSelected} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-3 flex gap-1 rounded-full bg-gray-100 p-1 dark:bg-gray-700">
+            {(['day', 'week', 'month'] as RankWindow[]).map((w) => (
+              <button
+                key={w}
+                onClick={() => setRange(w)}
+                className={`flex-1 rounded-full px-3 py-1 text-xs font-medium transition ${
+                  range === w
+                    ? 'bg-white text-[#2AC1BC] shadow-sm dark:bg-gray-800'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                {RANK_WINDOW_TABS[w]}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              불러오는 중...
+            </p>
+          ) : entries.length === 0 ? (
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              기록이 없습니다.
+            </p>
+          ) : (
+            <ol className="space-y-2">
+              {entries.map((e) => {
+                const isMe = e.userId === myUserId;
+                return (
+                  <li
+                    key={e.userId}
+                    className={`flex items-center gap-3 rounded-2xl border p-3 ${
+                      isMe
+                        ? 'border-[#2AC1BC] bg-[#EBFBFA] dark:bg-[#14302f]'
+                        : 'border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-700'
+                    }`}
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-500 dark:bg-gray-600 dark:text-gray-300">
+                      {e.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-bold text-gray-800 dark:text-gray-100">
+                          {e.nickname}
+                        </span>
+                        {isMe && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                            (나)
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-600">
+                        <div
+                          className="h-full rounded-full bg-[#2AC1BC]"
+                          style={{
+                            width:
+                              max > 0 ? `${(e.runSeconds / max) * 100}%` : '0%',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span
+                      className={`shrink-0 text-sm font-bold tabular-nums ${
+                        e.runSeconds > 0
+                          ? 'text-[#2AC1BC]'
+                          : 'text-gray-400 dark:text-gray-500'
+                      }`}
+                    >
+                      {e.runSeconds > 0 ? formatRun(e.runSeconds) : '기록 없음'}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RankCalendar({
+  selected,
+  onSelect,
+}: {
+  selected: Date;
+  onSelect: (d: Date) => void;
+}) {
+  const today = rankToday();
+  const [view, setView] = useState(() => ({
+    year: selected.getFullYear(),
+    month: selected.getMonth(),
+  }));
+
+  const cells = rankMonthCells(view.year, view.month);
+  const isCurrentMonth =
+    view.year === today.getFullYear() && view.month === today.getMonth();
+
+  const goPrev = () =>
+    setView((v) =>
+      v.month === 0
+        ? { year: v.year - 1, month: 11 }
+        : { year: v.year, month: v.month - 1 }
+    );
+  const goNext = () => {
+    if (isCurrentMonth) return;
+    setView((v) =>
+      v.month === 11
+        ? { year: v.year + 1, month: 0 }
+        : { year: v.year, month: v.month + 1 }
+    );
+  };
+
+  return (
+    <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          onClick={goPrev}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-[#2AC1BC] hover:text-[#2AC1BC] dark:border-gray-600 dark:text-gray-400"
+          aria-label="이전 달"
+        >
+          ◀
+        </button>
+        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+          {view.year}년 {view.month + 1}월
+        </span>
+        <button
+          onClick={goNext}
+          disabled={isCurrentMonth}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-[#2AC1BC] hover:text-[#2AC1BC] disabled:cursor-not-allowed disabled:opacity-30 dark:border-gray-600 dark:text-gray-400"
+          aria-label="다음 달"
+        >
+          ▶
+        </button>
+      </div>
+
+      <div className="mb-1 grid grid-cols-7 gap-1">
+        {RANK_WEEKDAYS.map((w) => (
+          <div
+            key={w}
+            className="py-1 text-center text-[10px] font-bold text-gray-400 dark:text-gray-500"
+          >
+            {w}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((cell, i) => {
+          if (!cell) return <div key={i} />;
+          const isFuture = cell > today;
+          const isToday = cell.getTime() === today.getTime();
+          const isSel = cell.getTime() === selected.getTime();
+          return (
+            <button
+              key={i}
+              onClick={() => onSelect(cell)}
+              disabled={isFuture}
+              className={`flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition ${
+                isFuture
+                  ? 'text-gray-300 dark:text-gray-600'
+                  : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+              } ${isSel ? 'ring-2 ring-[#2AC1BC]' : ''} ${
+                isToday ? 'border border-[#2AC1BC]/50' : ''
+              }`}
+            >
+              <span>{cell.getDate()}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

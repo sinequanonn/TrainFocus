@@ -98,4 +98,17 @@ public interface FocusSessionRepository extends JpaRepository<FocusSession, Long
             @Param("statuses") Collection<FocusSessionStatus> statuses,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
+
+    @Query("""
+            SELECT fs.user.id AS userId, COALESCE(SUM(fs.focusSeconds), 0) AS runSeconds
+            FROM FocusSession fs
+            WHERE fs.user.id IN :userIds AND fs.status IN :statuses
+              AND fs.startedAt >= :from AND fs.startedAt < :to
+            GROUP BY fs.user.id
+            """)
+    List<RoomRankingProjection> sumFocusByUsers(
+            @Param("userIds") List<Long> userIds,
+            @Param("statuses") Collection<FocusSessionStatus> statuses,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

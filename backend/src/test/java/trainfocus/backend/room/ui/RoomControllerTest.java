@@ -13,19 +13,13 @@ import trainfocus.backend.auth.firebase.FirebaseUserInfo;
 import trainfocus.backend.common.exception.BusinessException;
 import trainfocus.backend.common.exception.ErrorCode;
 import trainfocus.backend.room.application.RoomService;
-import trainfocus.backend.room.application.dto.RoomCreateRequest;
-import trainfocus.backend.room.application.dto.RoomJoinRequest;
-import trainfocus.backend.room.application.dto.RoomOwnerTransferRequest;
-import trainfocus.backend.room.application.dto.RoomRenameRequest;
-import trainfocus.backend.room.application.dto.RoomUserLiveResponse;
-import trainfocus.backend.room.domain.Room;
-import trainfocus.backend.room.domain.RoomFixture;
-import trainfocus.backend.room.domain.RoomUserFixture;
-import trainfocus.backend.room.domain.RoomUserRole;
+import trainfocus.backend.room.application.dto.*;
+import trainfocus.backend.room.domain.*;
 import trainfocus.backend.user.application.UserService;
 import trainfocus.backend.user.domain.User;
 import trainfocus.backend.user.domain.UserFixture;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -364,5 +358,37 @@ class RoomControllerTest {
         mockMvc.perform(get("/api/rooms/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.errorCode").value("AUTH_TOKEN_MISSING"));
+    }
+
+    // ===================== ranking =====================
+
+    @Test
+    void 랭킹_조회_200() throws Exception {
+        given(roomService.findRanking(eq(1L), any(User.class),
+                eq(LocalDate.of(2026, 6, 3)), eq(RankPeriod.WEEK)))
+                .willReturn(new RoomRankingResponse(LocalDate.of(2026, 6, 3), "week", List.of(
+                        new RoomRankingResponse.Entry(1, 2L, "테스터2", 300L),
+                        new RoomRankingResponse.Entry(2, 1L, "테스터1", 100L)
+                )));
+
+        mockMvc.perform(get("/api/rooms/1/ranking")
+                        .header("Authorization", BEARER)
+                        .param("date", "2026-06-03")
+                        .param("period", "week"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.period").value("week"))
+                .andExpect(jsonPath("$.data.entries[0].rank").value(1))
+                .andExpect(jsonPath("$.data.entries[0].userId").value(2))
+                .andExpect(jsonPath("$.data.entries[0].nickname").value("테스터2"))
+                .andExpect(jsonPath("$.data.entries[0].runSeconds").value(300));
+    }
+
+    @Test
+    void 랭킹_잘못된_period_4xx() throws Exception {
+        mockMvc.perform(get("/api/rooms/1/ranking")
+                        .header("Authorization", BEARER)
+                        .param("date", "2026-06-03")
+                        .param("period", "year"))
+                .andExpect(status().is4xxClientError());
     }
 }

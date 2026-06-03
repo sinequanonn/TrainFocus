@@ -126,6 +126,22 @@ class RoomUserRepositoryTest {
         }).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void findWithUserByRoomId_멤버를_User와_함께_조회() {
+        User u1 = persistUser("uid-1");
+        User u2 = persistUser("uid-2");
+        Room room = persistRoom("방", "CODEAAAA");
+        roomUserRepository.save(RoomUser.createOwner(room, u1));
+        roomUserRepository.save(RoomUser.createMember(room, u2));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<RoomUser> members = roomUserRepository.findWithUserByRoomId(room.getId());
+
+        assertThat(members).hasSize(2);
+        assertThat(members).allSatisfy(ru -> assertThat(ru.getUser().getNickname()).isNotNull());
+    }
+
     private User persistUser(String uid) {
         User user = User.createNewUser(uid, uid + "@b.com", "이름" + uid);
         entityManager.persist(user);

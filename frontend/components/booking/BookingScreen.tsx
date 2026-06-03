@@ -182,7 +182,7 @@ export function BookingScreen({
               {myRooms.length > 0 && onSelectRoom && (
                 <div>
                   <label className="mb-1 block text-xs font-bold uppercase text-gray-400 dark:text-gray-500">
-                    🏃 함께 달리기
+                    함께 몰입
                   </label>
                   <select
                     value={selectedRoom ? String(selectedRoom.id) : ''}
@@ -197,7 +197,7 @@ export function BookingScreen({
                     }}
                     className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 outline-none focus:border-[#2AC1BC] dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100"
                   >
-                    <option value="">혼자 달리기</option>
+                    <option value="">혼자 몰입</option>
                     {myRooms.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.name}

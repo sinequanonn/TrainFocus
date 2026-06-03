@@ -60,6 +60,7 @@ public enum ErrorCode {
     ROOM_OWNER_TRANSFER_SELF(HttpStatus.CONFLICT, "본인에게 방장을 양도할 수 없습니다."),
     ROOM_FULL(HttpStatus.CONFLICT, "방 인원이 가득 찼습니다."),
     ROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "방 멤버를 찾을 수 없습니다."),
+    ROOM_NOT_EMPTY(HttpStatus.UNPROCESSABLE_ENTITY, "방에 멤버가 있어 삭제할 수 없습니다."),
     ;
 
     private final HttpStatus status;

@@ -68,7 +68,7 @@ export default function LoginPage() {
 
             {/* 가치 키워드 */}
             <div className="mb-8 flex gap-2">
-              {['집중', '여정', '기록'].map((k) => (
+              {['집중', '여정', '기록', '함께'].map((k) => (
                 <span
                   key={k}
                   className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-[#2AC1BC] shadow-sm backdrop-blur"
@@ -91,9 +91,14 @@ export default function LoginPage() {
                 desc="목표 시간 동안 기차가 도착역까지 이동"
               />
               <Step
-                icon="🎉"
+                icon="🎟️"
                 title="도착하기"
-                desc="완주한 여정이 기록으로 누적"
+                desc="완주하면 그날의 운행 승차권이 발행돼요"
+              />
+              <Step
+                icon="🏆"
+                title="함께 몰입"
+                desc="방에서 동료와 몰입 시간 순위를 겨뤄요"
               />
             </ol>
 
