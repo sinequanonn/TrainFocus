@@ -20,6 +20,7 @@ interface Props {
   myRooms?: RoomResponse[];
   selectedRoom?: RoomResponse | null;
   onSelectRoom?: (room: RoomResponse | null) => void;
+  onOpenGuide?: () => void;
 }
 
 export function BookingScreen({
@@ -37,6 +38,7 @@ export function BookingScreen({
   myRooms = [],
   selectedRoom = null,
   onSelectRoom,
+  onOpenGuide,
 }: Props) {
   // 작은 화면 대응: 패널 접기/펴기. 마커 클릭 시 자동으로 다시 펼침.
   const [open, setOpen] = useState(true);
@@ -84,6 +86,16 @@ export function BookingScreen({
                   🎫
                 </span>{' '}
                 승차권 예매
+                {onOpenGuide && (
+                  <button
+                    onClick={onOpenGuide}
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 text-xs font-bold text-gray-400 transition hover:border-[#2AC1BC] hover:text-[#2AC1BC] dark:border-gray-700 dark:text-gray-500"
+                    title="사용법 보기"
+                    aria-label="사용법 보기"
+                  >
+                    ?
+                  </button>
+                )}
               </h2>
               <button
                 onClick={() => setOpen(false)}

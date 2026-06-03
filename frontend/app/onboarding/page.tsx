@@ -113,7 +113,7 @@ export default function OnboardingPage() {
             href="/history"
             className="rounded-full px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
           >
-            이동 기록
+            운행 일지
           </Link>
           <span className="h-3 w-px bg-gray-300/60 dark:bg-white/10" aria-hidden />
           <button

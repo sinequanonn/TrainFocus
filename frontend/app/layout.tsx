@@ -24,7 +24,7 @@ const themeInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "FocusTrain | 우아한 집중 열차",
+  title: "FocusTrain | 우아한 몰입 훈련",
   description: "대한민국을 가로지르며 완성하는 나만의 몰입 시간",
 };
 
