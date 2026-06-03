@@ -19,6 +19,7 @@ import trainfocus.backend.station.domain.Station;
 import trainfocus.backend.station.domain.StationFixture;
 import trainfocus.backend.user.domain.User;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -153,6 +154,100 @@ class FocusSessionRepositoryTest {
     void findDetailById_없으면_Optional_empty() {
         Optional<FocusSession> found = focusSessionRepository.findDetailById(9999L);
         assertThat(found).isEmpty();
+    }
+
+    @Test
+    void aggregateDailyFocus_날짜별_집중시간_집계() {
+        // given
+        User user = persistUser("uid-1");
+        Station dep = persistStation("강남");
+        Station arr = persistStation("서울역");
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 9, 0), 1);   // focus 60s
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 10, 0), 2);  // focus 120s
+        saveAborted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 11, 0), 60);   // focus 60s, 중단
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 15, 9, 0), 1);   // 다른 날
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        List<CalendarDayProjection> rows = focusSessionRepository.aggregateDailyFocus(
+                user,
+                List.of(FocusSessionStatus.COMPLETED, FocusSessionStatus.ABORTED),
+                FocusSessionStatus.COMPLETED,
+                LocalDateTime.of(2026, 6, 1, 0, 0),
+                LocalDateTime.of(2026, 7, 1, 0, 0)
+        );
+
+        // then
+        assertThat(rows).hasSize(2);
+        CalendarDayProjection day10 = rows.stream()
+                .filter(r -> r.getDate().equals(LocalDate.of(2026, 6, 10)))
+                .findFirst().orElseThrow();
+        assertThat(day10.getSessionCount()).isEqualTo(3);
+        assertThat(day10.getArrivedCount()).isEqualTo(2);
+        assertThat(day10.getRunSeconds()).isEqualTo(240);
+    }
+
+    @Test
+    void findSessionsBetween_그날_종료세션_시간순() {
+        // given
+        User user = persistUser("uid-1");
+        Station dep = persistStation("강남");
+        Station arr = persistStation("서울역");
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 9, 0), 1);
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 10, 0), 2);
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 11, 9, 0), 1);   // 범위 밖
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        List<FocusSession> sessions = focusSessionRepository.findSessionsBetween(
+                user,
+                List.of(FocusSessionStatus.COMPLETED, FocusSessionStatus.ABORTED),
+                LocalDateTime.of(2026, 6, 10, 0, 0),
+                LocalDateTime.of(2026, 6, 11, 0, 0)
+        );
+
+        // then
+        assertThat(sessions).hasSize(2);
+        assertThat(sessions.get(0).getFocusSeconds()).isEqualTo(60);
+        assertThat(sessions.get(1).getFocusSeconds()).isEqualTo(120);
+    }
+
+    @Test
+    void sumFocusSecondsBetween_범위_집중시간_합() {
+        // given
+        User user = persistUser("uid-1");
+        Station dep = persistStation("강남");
+        Station arr = persistStation("서울역");
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 9, 0), 1);   // 60
+        saveCompleted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 10, 0), 2);  // 120
+        saveAborted(user, dep, arr, LocalDateTime.of(2026, 6, 10, 11, 0), 60);   // 60
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        long sum = focusSessionRepository.sumFocusSecondsBetween(
+                user,
+                List.of(FocusSessionStatus.COMPLETED, FocusSessionStatus.ABORTED),
+                LocalDateTime.of(2026, 6, 10, 0, 0),
+                LocalDateTime.of(2026, 6, 11, 0, 0)
+        );
+
+        // then
+        assertThat(sum).isEqualTo(240);
+    }
+
+    private void saveCompleted(User u, Station dep, Station arr, LocalDateTime start, int baseMinutes) {
+        FocusSession s = FocusSession.createNewFocusSession(u, dep, arr, baseMinutes, 0, start);
+        s.complete(start.plusSeconds(baseMinutes * 60L));
+        focusSessionRepository.save(s);
+    }
+
+    private void saveAborted(User u, Station dep, Station arr, LocalDateTime start, int focusSeconds) {
+        FocusSession s = FocusSession.createNewFocusSession(u, dep, arr, 5, 0, start);
+        s.abort(start.plusSeconds(focusSeconds));
+        focusSessionRepository.save(s);
     }
 
     private User persistUser(String uid) {
