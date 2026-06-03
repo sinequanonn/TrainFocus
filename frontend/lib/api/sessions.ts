@@ -167,6 +167,66 @@ export async function getSessionHistoryDetail(
   );
 }
 
+export interface RunningLogCalendarDay {
+  date: string;
+  sessionCount: number;
+  arrivedCount: number;
+  runSeconds: number;
+}
+
+export interface RunningLogCalendarResponse {
+  year: number;
+  month: number;
+  days: RunningLogCalendarDay[];
+}
+
+export interface RunningLogTicket {
+  sessionId: number;
+  departure: Station;
+  arrival: Station;
+  focusSeconds: number;
+  targetSeconds: number;
+  completed: boolean;
+}
+
+export interface RunningLogDailyResponse {
+  date: string;
+  runSeconds: number;
+  arrivedCount: number;
+  sessionCount: number;
+  tickets: RunningLogTicket[];
+}
+
+export interface RunningLogPeriodResponse {
+  weekRunSeconds: number;
+  monthRunSeconds: number;
+}
+
+export async function getRunningLogCalendar(
+  year: number,
+  month: number
+): Promise<RunningLogCalendarResponse> {
+  return apiClient<RunningLogCalendarResponse>(
+    `/api/sessions/log/calendar?year=${year}&month=${month}`
+  );
+}
+
+export async function getRunningLogDaily(
+  date: string
+): Promise<RunningLogDailyResponse> {
+  return apiClient<RunningLogDailyResponse>(
+    `/api/sessions/log/daily?date=${date}`
+  );
+}
+
+export async function getRunningLogPeriod(
+  date: string
+): Promise<RunningLogPeriodResponse> {
+  return apiClient<RunningLogPeriodResponse>(
+    `/api/sessions/log/period?date=${date}`
+  );
+}
+
 export interface AdminSessionResponse {
   id: number;
   userId: number;

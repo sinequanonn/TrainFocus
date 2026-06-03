@@ -1,0 +1,55 @@
+package trainfocus.backend.session.ui;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import trainfocus.backend.auth.ui.LoginUser;
+import trainfocus.backend.common.ui.ApiResponse;
+import trainfocus.backend.session.application.RunningLogService;
+import trainfocus.backend.session.application.dto.RunningLogCalendarResponse;
+import trainfocus.backend.session.application.dto.RunningLogDailyResponse;
+import trainfocus.backend.session.application.dto.RunningLogPeriodResponse;
+import trainfocus.backend.user.domain.User;
+
+import java.time.LocalDate;
+
+@RestController
+@RequiredArgsConstructor
+@Validated
+@RequestMapping("/api/sessions/log")
+public class RunningLogController {
+
+    private final RunningLogService runningLogService;
+
+    @GetMapping("/calendar")
+    public ResponseEntity<ApiResponse<RunningLogCalendarResponse>> calendar(
+            @LoginUser User user,
+            @RequestParam @Min(1) @Max(9999) int year,
+            @RequestParam @Min(1) @Max(12) int month
+    ) {
+        return ResponseEntity.ok(ApiResponse.of(runningLogService.getCalendar(user, year, month)));
+    }
+
+    @GetMapping("/daily")
+    public ResponseEntity<ApiResponse<RunningLogDailyResponse>> daily(
+            @LoginUser User user,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.ok(ApiResponse.of(runningLogService.getDaily(user, date)));
+    }
+
+    @GetMapping("/period")
+    public ResponseEntity<ApiResponse<RunningLogPeriodResponse>> period(
+            @LoginUser User user,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.ok(ApiResponse.of(runningLogService.getPeriod(user, date)));
+    }
+}

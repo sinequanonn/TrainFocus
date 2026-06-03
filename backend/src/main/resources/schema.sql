@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS `focus_sessions`
     `started_at`            DATETIME(6) NOT NULL,
     `planned_end_at`        DATETIME(6) NOT NULL,
     `ended_at`              DATETIME(6),
+    `focus_seconds`         INT,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `fk_sessions_departure` FOREIGN KEY (`departure_station_id`) REFERENCES `stations` (`id`),

@@ -10,14 +10,10 @@ import {
 } from '@/lib/api/sessions';
 import { ApiError } from '@/lib/api/client';
 
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+function hhmm(iso: string) {
+  return new Date(iso).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
   });
 }
 
@@ -71,10 +67,10 @@ export default function HistoryDetailPage({
   return (
     <main className="mx-auto max-w-3xl p-6 md:p-10">
       <Link
-        href="/history"
+        href={data ? `/history?date=${data.session.startedAt.slice(0, 10)}` : '/history'}
         className="mb-2 inline-block text-xs text-gray-400 hover:text-[#2AC1BC] dark:text-gray-500"
       >
-        ← 이동 기록 목록
+        ← 운행 일지
       </Link>
 
       {error && (
@@ -97,10 +93,7 @@ export default function HistoryDetailPage({
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                 }`}
               >
-                {data.session.status === 'COMPLETED' ? '완료' : '중단'}
-              </span>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                #{data.session.sessionId}
+                {data.session.status === 'COMPLETED' ? '무사 도착' : '중단'}
               </span>
             </div>
 
@@ -130,18 +123,6 @@ export default function HistoryDetailPage({
               />
               <Stat label="구간 수" value={`${data.legs.length}개`} />
             </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-2 text-sm md:grid-cols-3">
-              <TimeRow label="시작" value={formatDateTime(data.session.startedAt)} />
-              <TimeRow
-                label="예정 종료"
-                value={formatDateTime(data.session.plannedEndAt)}
-              />
-              <TimeRow
-                label="실제 종료"
-                value={formatDateTime(data.session.endedAt)}
-              />
-            </div>
           </section>
 
           {/* Leg 목록 */}
@@ -160,13 +141,10 @@ export default function HistoryDetailPage({
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2AC1BC] text-xs font-bold text-white">
                         {leg.legNumber}
                       </span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                          {formatDateTime(leg.startedAt)}
-                        </p>
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                          → {leg.endedAt ? formatDateTime(leg.endedAt) : '진행 중'}
-                        </p>
+                      <div className="flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-gray-100">
+                        <span>{hhmm(leg.startedAt)}</span>
+                        <span className="text-gray-300 dark:text-gray-600">~</span>
+                        <span>{leg.endedAt ? hhmm(leg.endedAt) : '진행 중'}</span>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-[#2AC1BC]">
@@ -206,13 +184,3 @@ function Stat({
   );
 }
 
-function TimeRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500">
-        {label}
-      </span>
-      <p className="font-mono text-xs text-gray-700 dark:text-gray-200">{value}</p>
-    </div>
-  );
-}

@@ -432,46 +432,7 @@ export default function HomePage() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
       {/* 헤더 floating */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between p-4 md:p-6">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-gray-100 bg-white/95 px-4 py-2 shadow-md backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight md:text-2xl">
-              {isFocusScreen ? (
-                <span>
-                  <span className="text-[#2AC1BC]">Focus</span>{' '}
-                  <span className="text-gray-800 dark:text-gray-100">
-                    Train
-                  </span>
-                </span>
-              ) : (
-                <button
-                  onClick={() => router.push('/')}
-                  className="transition-opacity hover:opacity-70"
-                >
-                  <span className="text-[#2AC1BC]">Focus</span>{' '}
-                  <span className="text-gray-800 dark:text-gray-100">
-                    Train
-                  </span>
-                </button>
-              )}
-            </h1>
-            {me && !isFocusScreen && (
-              <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                {me.nickname}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={() => setGuideOpen(true)}
-            disabled={isRunning}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-sm font-bold text-gray-400 transition hover:border-[#2AC1BC] hover:text-[#2AC1BC] disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
-            title={isRunning ? '운행 중에는 사용할 수 없습니다' : '사용법 보기'}
-            aria-label="사용법 보기"
-          >
-            ?
-          </button>
-        </div>
-
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-end p-4 md:p-6">
         {!isFocusScreen && (
           <div className="pointer-events-auto mr-14 flex items-center gap-2 rounded-2xl border border-gray-100 bg-white/95 px-3 py-2 shadow-md backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
             {isRunning ? (
@@ -509,14 +470,14 @@ export default function HomePage() {
                 className="cursor-not-allowed rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-300 dark:bg-gray-700 dark:text-gray-600"
                 title="운행 중에는 이동할 수 없습니다"
               >
-                이동 기록
+                운행 일지
               </span>
             ) : (
               <Link
                 href="/history"
                 className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                이동 기록
+                운행 일지
               </Link>
             )}
             <button
@@ -553,6 +514,7 @@ export default function HomePage() {
           myRooms={myRooms}
           selectedRoom={selectedRoom}
           onSelectRoom={setSelectedRoom}
+          onOpenGuide={() => setGuideOpen(true)}
         />
       )}
 

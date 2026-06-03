@@ -1,6 +1,7 @@
 package trainfocus.backend.common.ui;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -65,7 +66,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             MissingServletRequestParameterException.class,
-            MethodArgumentTypeMismatchException.class
+            MethodArgumentTypeMismatchException.class,
+            ConstraintViolationException.class
     })
     public ResponseEntity<ErrorResponse> handleInvalidRequestParameter(
             Exception e, HttpServletRequest request) {
